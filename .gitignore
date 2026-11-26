@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+packages/db-spike/sql/generated/
+
+# Credenciales de desarrollo (no subir)
+docs/ACCESOS_PRUEBAS.md
+
+# Archivos subidos al servidor (fotos de productos sin Cloudinary)
+uploads/

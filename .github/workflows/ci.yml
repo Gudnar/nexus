@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      ALLOW_DESTRUCTIVE_TESTS: "1" # base efímera del servicio de CI
+      DATABASE_URL: postgresql://erp_app:erp_app_pass@localhost:5432/erp?schema=public
+      DIRECT_URL: postgresql://erp_owner:erp_owner_pass@localhost:5432/erp?schema=public
+      PLATFORM_DATABASE_URL: postgresql://erp_platform:erp_platform_pass@localhost:5432/erp?schema=public
+      WORKER_DATABASE_URL: postgresql://erp_worker:erp_worker_pass@localhost:5432/erp?schema=public
+      JWT_ACCESS_SECRET: ci-secreto-de-pruebas-de-al-menos-32-caracteres
+      MFA_ENCRYPTION_KEY: ci-clave-de-pruebas-para-cifrar-secretos-mfa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Base de datos (roles erp_owner, erp_app, erp_platform y erp_worker, sin BYPASSRLS)
+        run: psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f infra/setup-db.sql
+
+      - name: Prisma
+        run: |
+          pnpm --filter @erp/db generate
+          pnpm --filter @erp/db migrate:deploy
+
+      - name: Typecheck
+        run: pnpm --filter @erp/contracts --filter @erp/db --filter @erp/api typecheck
+
+      - name: Pruebas de aislamiento y RLS (@erp/db)
+        run: pnpm --filter @erp/db test
+
+      - name: Pruebas de la API
+        run: pnpm --filter @erp/api test

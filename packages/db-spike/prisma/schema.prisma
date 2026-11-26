@@ -1,0 +1,110 @@
+// SPIKE ADR-001. Modelo mínimo que ejercita los puntos de riesgo:
+//  - tenant_id en toda tabla de negocio + UNIQUE (tenant_id, id)
+//  - FKs compuestas (tenant_id, x_id), incluida una NULLABLE (Sale.customer)
+//  - relación sucursal-almacén validada con FK (tenant_id, branch_id, warehouse_id)
+//  - tabla de auditoría append-only
+// RLS, triggers y grants NO se expresan en Prisma: viven en sql/20-rls.sql.
+// Los ids se generan en la aplicación (UUID v7), por eso no hay @default.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SPIKE_APP_URL")
+}
+
+// Global de plataforma: sin RLS.
+model Tenant {
+  id   String @id @db.Uuid
+  slug String @unique
+  name String
+
+  branches   Branch[]
+  customers  Customer[]
+  warehouses Warehouse[]
+  sales      Sale[]
+  auditLogs  AuditLog[]
+
+  @@map("tenant")
+}
+
+model Branch {
+  id       String @id @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  code     String
+  name     String
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  warehouses Warehouse[]
+  sales      Sale[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@map("branch")
+}
+
+model Customer {
+  id       String @id @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  name     String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  sales  Sale[]
+
+  @@unique([tenantId, id])
+  @@map("customer")
+}
+
+model Warehouse {
+  id       String @id @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  branchId String @map("branch_id") @db.Uuid
+  code     String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch Branch @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  sales  Sale[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, branchId, id])
+  @@unique([tenantId, code])
+  @@map("warehouse")
+}
+
+model Sale {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  branchId    String   @map("branch_id") @db.Uuid
+  warehouseId String   @map("warehouse_id") @db.Uuid
+  customerId  String?  @map("customer_id") @db.Uuid
+  number      String
+  total       Decimal  @db.Decimal(18, 4)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch    Branch     @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  warehouse Warehouse  @relation(fields: [tenantId, branchId, warehouseId], references: [tenantId, branchId, id], onDelete: Restrict)
+  customer  Customer?  @relation(fields: [tenantId, customerId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, branchId, number])
+  @@map("sale")
+}
+
+// Append-only: el rol de aplicación solo recibe SELECT e INSERT.
+model AuditLog {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id") @db.Uuid
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("audit_log")
+}

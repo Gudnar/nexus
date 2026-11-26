@@ -1,0 +1,61 @@
+{
+  "source": "a_clean_modern_login_page_for_an_erp_system_spli.png",
+  "source_dimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "assets": [
+    {
+      "file": "00_login_reference_full.png",
+      "description": "Composición completa de referencia"
+    },
+    {
+      "file": "01_brand_logo_nexus_erp.png",
+      "description": "Logotipo y nombre NEXUS ERP con tagline"
+    },
+    {
+      "file": "02_hero_illustration_laptop_plant_mug.png",
+      "description": "Ilustración principal: laptop, planta y taza"
+    },
+    {
+      "file": "03_feature_sales_icon.png",
+      "description": "Icono de ventas"
+    },
+    {
+      "file": "04_feature_inventory_icon.png",
+      "description": "Icono de inventario"
+    },
+    {
+      "file": "05_feature_reports_icon.png",
+      "description": "Icono de reportes"
+    },
+    {
+      "file": "06_feature_ecommerce_icon.png",
+      "description": "Icono de ecommerce"
+    },
+    {
+      "file": "07_login_security_lock_icon.png",
+      "description": "Icono de seguridad para cabecera del login"
+    },
+    {
+      "file": "08_google_logo_button.png",
+      "description": "Logotipo Google del botón social"
+    },
+    {
+      "file": "09_microsoft_logo_button.png",
+      "description": "Logotipo Microsoft del botón social"
+    },
+    {
+      "file": "10_whatsapp_logo_button.png",
+      "description": "Logotipo WhatsApp del botón social"
+    },
+    {
+      "file": "11_security_shield_icon.png",
+      "description": "Escudo de conexión segura"
+    },
+    {
+      "file": "12_footer_globe_icon.png",
+      "description": "Icono web/globo del pie de página"
+    }
+  ]
+}

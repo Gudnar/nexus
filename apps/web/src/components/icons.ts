@@ -1,0 +1,38 @@
+import {
+  ArrowLeftRight, Building2, ChartNoAxesCombined, ClipboardCheck, Clock, CreditCard, FileText, HandCoins,
+  Layers, LayoutDashboard, MapPin, MessagesSquare, Package, PackageCheck, Plug, Search, Printer, Receipt, Settings,
+  ShieldCheck, ShoppingCart, Store, Tags, Truck, UserCog, Users, Wallet, Warehouse,
+  type LucideIcon,
+} from "lucide-react";
+
+/** Nombres de ícono del JSON de diseño → componentes Lucide. */
+export const ICONS: Record<string, LucideIcon> = {
+  "layout-dashboard": LayoutDashboard,
+  "shopping-cart": ShoppingCart,
+  "file-text": FileText,
+  "package-check": PackageCheck,
+  package: Package,
+  tags: Tags,
+  layers: Layers,
+  warehouse: Warehouse,
+  "arrow-left-right": ArrowLeftRight,
+  truck: Truck,
+  "building-2": Building2,
+  wallet: Wallet,
+  "credit-card": CreditCard,
+  "hand-coins": HandCoins,
+  clock: Clock,
+  receipt: Receipt,
+  "clipboard-check": ClipboardCheck,
+  users: Users,
+  store: Store,
+  "messages-square": MessagesSquare,
+  "map-pin": MapPin,
+  "user-cog": UserCog,
+  "shield-check": ShieldCheck,
+  printer: Printer,
+  plug: Plug,
+  search: Search,
+  "chart-no-axes-combined": ChartNoAxesCombined,
+  settings: Settings,
+};
