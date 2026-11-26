@@ -223,9 +223,9 @@ export function PointOfSale({
             <label className={lab}>Fecha<input aria-label="Fecha" type="date" className={`${field} bg-surface-muted`} value={today} readOnly /></label>
             <div className={lab}>Impuestos
               <div role="radiogroup" aria-label="Tipo de impuestos" className="flex h-10 overflow-hidden rounded-lg border border-brand">
-                {([[true, "CON IMPUESTOS", "CF"], [false, "SIN IMPUESTOS", "SF"]] as const).map(([v, l, k]) => (
-                  <button key={k} type="button" role="radio" aria-checked={withTax === v} data-testid={`tax-${k}`} onClick={() => { touch(); setWithTax(v); }}
-                    className={`px-3.5 text-[12px] font-semibold tracking-wide ${withTax === v ? "bg-brand text-white" : "bg-surface text-ink-2 hover:bg-surface-muted"}`}>{l} <span className="opacity-80">({k})</span></button>
+                {([[true, "Con impuestos", "CF"], [false, "Sin impuestos", "SF"]] as const).map(([v, l, k]) => (
+                  <button key={k} type="button" role="radio" aria-checked={withTax === v} aria-label={l} title={l} data-testid={`tax-${k}`} onClick={() => { touch(); setWithTax(v); }}
+                    className={`px-5 text-[13px] font-semibold tracking-wide ${withTax === v ? "bg-brand text-white" : "bg-surface text-ink-2 hover:bg-surface-muted"}`}>{k}</button>
                 ))}
               </div>
             </div>

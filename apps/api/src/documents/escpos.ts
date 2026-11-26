@@ -67,7 +67,7 @@ export function layoutText(d: DocData, c: DocumentConfig, w: number): Row[] {
   const rule = () => add("-".repeat(w), { rule: true });
   for (const l of wrap(d.company.name, w)) add(center(l, w), { bold: true });
   if (d.company.taxId) add(center(`NIT ${d.company.taxId}`, w));
-  if (d.branch) for (const l of wrap([d.branch.name, d.branch.address, d.branch.phone && `Tel. ${d.branch.phone}`].filter(Boolean).join(" - "), w)) add(center(l, w));
+  if (d.branch) for (const part of [d.branch.name, d.branch.address, [d.branch.phone && `Tel. ${d.branch.phone}`, d.branch.email].filter(Boolean).join(" - "), d.branch.register && `Caja: ${d.branch.register}`]) if (part) for (const l of wrap(part, w)) add(center(l, w));
   for (const h of c.headerLines.filter(Boolean)) for (const l of wrap(h, w)) add(center(l, w));
   rule();
   add(`${d.title} ${d.code}`.slice(0, w), { bold: true });

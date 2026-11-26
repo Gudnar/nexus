@@ -17,9 +17,9 @@ const Env = z.object({
   LOGIN_MAX_FAILURES: z.coerce.number().int().positive().default(5),
   /** Intentos de login por IP y minuto. */
   LOGIN_RATE_PER_MIN: z.coerce.number().int().positive().default(60),
-  PORT: z.coerce.number().int().default(3000),
+  PORT: z.coerce.number().int().default(4300),
   /** URL pública de la web: se usa en los enlaces de los correos. */
-  APP_PUBLIC_URL: z.string().url().default("http://localhost:3001"),
+  APP_PUBLIC_URL: z.string().url().default("http://localhost:4310"),
   /** "log": no envía, guarda en el buzón de desarrollo. "smtp": envía con SMTP_URL. */
   MAIL_TRANSPORT: z.enum(["log", "smtp"]).default("log"),
   SMTP_URL: z.string().optional(),

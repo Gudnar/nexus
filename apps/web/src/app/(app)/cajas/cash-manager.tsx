@@ -171,7 +171,10 @@ const toNumbers = (v: Record<string, string>) => Object.fromEntries(Object.entri
 // ───────────── Apertura ─────────────
 
 function OpenForm({ registers, onDone, onCancel }: { registers: CashRegisterSummary[]; onDone: (id: string) => void; onCancel: () => void }) {
-  const [registerId, setRegisterId] = useState(registers[0]?.id ?? "");
+  const branchOpts = [...new Map(registers.map((r) => [r.branch.id, r.branch.name])).entries()];
+  const [branchId, setBranchId] = useState(registers[0]?.branch.id ?? "");
+  const inBranch = registers.filter((r) => r.branch.id === branchId);
+  const [registerId, setRegisterId] = useState(inBranch[0]?.id ?? "");
   const [dens, setDens] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +188,8 @@ function OpenForm({ registers, onDone, onCancel }: { registers: CashRegisterSumm
   }
   return (
     <form onSubmit={submit} className="grid gap-5">
-      <Field label="Caja"><select className={inputCls} value={registerId} onChange={(e) => setRegisterId(e.target.value)} aria-label="Caja">{registers.map((r) => <option key={r.id} value={r.id}>{r.name} ({r.code}) · {r.branch.name}</option>)}</select></Field>
+      <Field label="Sucursal"><select className={inputCls} value={branchId} onChange={(e) => { setBranchId(e.target.value); setRegisterId(registers.find((r) => r.branch.id === e.target.value)?.id ?? ""); }} aria-label="Sucursal">{branchOpts.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></Field>
+      <Field label="Caja"><select className={inputCls} value={registerId} onChange={(e) => setRegisterId(e.target.value)} aria-label="Caja">{inBranch.map((r) => <option key={r.id} value={r.id}>{r.name} ({r.code})</option>)}</select></Field>
       <Denominations value={dens} onChange={setDens} label="Fondo inicial: cuenta los billetes y monedas que hay en la caja" />
       {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
       <div className="flex justify-end gap-2">

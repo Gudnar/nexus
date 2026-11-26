@@ -49,11 +49,11 @@ psql -U postgres -h localhost -f infra/setup-db.sql
 pnpm --filter @erp/db migrate:deploy
 # 2. Datos de demostración (reemplaza el contenido de la base)
 pnpm --filter @erp/api seed:demo
-# 3. API (3000) y web (3001)
+# 3. API (4300) y web (4310)
 pnpm --filter @erp/api start
 pnpm --filter @erp/web dev
 ```
-Con `MAIL_TRANSPORT=log` los correos no salen: se leen en `GET http://localhost:3000/api/v1/dev/mailbox`.
+Con `MAIL_TRANSPORT=log` los correos no salen: se leen en `GET http://localhost:4300/api/v1/dev/mailbox`.
 Un administrador global real se crea con `pnpm --filter @erp/api platform:admin <correo> "<nombre>" <contraseña>`.
 
 ## Actualizar una base existente

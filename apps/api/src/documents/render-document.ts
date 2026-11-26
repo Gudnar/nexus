@@ -6,7 +6,7 @@ export interface DocData {
   code: string;
   date: string;             // ya formateada
   company: { name: string; taxId: string | null };
-  branch: { name: string; address: string | null; phone: string | null } | null;
+  branch: { name: string; address: string | null; phone: string | null; email?: string | null; register?: string | null } | null;
   /** Etiqueta y nombre de la contraparte (Cliente / Proveedor). */
   party: { label: string; name: string } | null;
   meta: { label: string; value: string }[];
@@ -44,7 +44,10 @@ export function renderDocument(d: DocData, c: DocumentConfig): string {
   const header = [
     `<h1>${esc(d.company.name)}</h1>`,
     d.company.taxId ? `<div class="muted">NIT ${esc(d.company.taxId)}</div>` : "",
-    d.branch ? `<div class="muted">${esc(d.branch.name)}${d.branch.address ? " · " + esc(d.branch.address) : ""}${d.branch.phone ? " · Tel. " + esc(d.branch.phone) : ""}</div>` : "",
+    d.branch ? `<div class="muted"><b>${esc(d.branch.name)}</b></div>` : "",
+    d.branch?.address ? `<div class="muted">${esc(d.branch.address)}</div>` : "",
+    d.branch && (d.branch.phone || d.branch.email) ? `<div class="muted">${[d.branch.phone ? "Tel. " + esc(d.branch.phone) : "", d.branch.email ? esc(d.branch.email) : ""].filter(Boolean).join(" · ")}</div>` : "",
+    d.branch?.register ? `<div class="muted">Caja: ${esc(d.branch.register)}</div>` : "",
     ...c.headerLines.filter(Boolean).map((l) => `<div class="muted">${esc(l)}</div>`),
   ].join("");
 

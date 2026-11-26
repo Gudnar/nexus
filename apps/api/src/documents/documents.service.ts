@@ -84,7 +84,7 @@ export class DocumentsService {
     const info = await ctx.tenantInfo();
     const data: DocData = {
       title: LABEL[docType], code: "EJEMPLO-000001", date: this.fmt(info.timezone),
-      company: { name: info.legalName, taxId: null }, branch: { name: "Casa central", address: "Av. Principal 123", phone: "2-123456" },
+      company: { name: info.legalName, taxId: null }, branch: { name: "Casa central", address: "Av. Principal 123", phone: "2-123456", email: "sucursal@empresa.com", register: "Caja 1" },
       party: { label: docType === "PURCHASE_ORDER" ? "Proveedor" : "Cliente", name: "Nombre de ejemplo" }, meta: [{ label: "Fecha", value: this.fmt(info.timezone) }],
       lines: [
         { code: "P-001", name: "Producto de ejemplo uno", qty: "2", unit: "UND", price: "10,00", discountPct: "0", total: "20,00" },
@@ -114,9 +114,21 @@ export class DocumentsService {
     return { tz: info.timezone, company: { name: info.legalName, taxId: t?.taxId ?? null } };
   }
 
-  private async branchOf(ctx: RequestContext, branchId: string | null) {
+  /** Datos de la sucursal que emite el documento y, si se conoce, la caja donde se cobró. */
+  private async branchOf(ctx: RequestContext, branchId: string | null, register?: string | null) {
     if (!branchId) return null;
-    return ctx.run((tx) => tx.branch.findUnique({ where: { id: branchId }, select: { name: true, address: true, phone: true } }));
+    const b = await ctx.run((tx) => tx.branch.findUnique({ where: { id: branchId }, select: { name: true, address: true, phone: true, email: true } }));
+    return b ? { ...b, register: register ?? null } : null;
+  }
+
+  /** Caja del turno en que se cobró la venta (null si no hubo cobro en caja). */
+  private async registerOfSale(ctx: RequestContext, saleId: string): Promise<string | null> {
+    return ctx.run(async (tx) => {
+      const p = await tx.payment.findFirst({ where: { saleId, cashSessionId: { not: null } }, orderBy: { receivedAt: "asc" }, select: { cashSessionId: true } });
+      if (!p?.cashSessionId) return null;
+      const s = await tx.cashSession.findUnique({ where: { id: p.cashSessionId }, select: { register: { select: { name: true } } } });
+      return s?.register.name ?? null;
+    });
   }
 
   private async load(ctx: RequestContext, type: DocumentType, id: string, params: DepositVoucherParams = {}): Promise<DocData> {
@@ -151,7 +163,7 @@ export class DocumentsService {
       for (const l of s.lines) for (const t of l.taxes) if (!t.exempt) taxes.set(`${t.code} ${Number(t.rate)}%`, (taxes.get(`${t.code} ${Number(t.rate)}%`) ?? 0) + Number(t.amount));
       return {
         title: s.status === "CANCELLED" ? "Recibo ANULADO" : "Recibo de venta", code: s.code ?? "", date: this.fmt(tz, s.confirmedAt ?? s.createdAt), company,
-        branch: await this.branchOf(ctx, sale?.branchId ?? null), party: s.customer ? { label: "Cliente", name: s.customer.name } : null,
+        branch: await this.branchOf(ctx, sale?.branchId ?? null, await this.registerOfSale(ctx, id)), party: s.customer ? { label: "Cliente", name: s.customer.name } : null,
         meta: [{ label: "Fecha", value: this.fmt(tz, s.confirmedAt ?? s.createdAt) }, { label: "Almacén", value: s.warehouse.name }],
         lines: s.lines.map((l) => ({ code: l.productCode, name: l.productName, qty: q(l.quantity), unit: l.unit, price: n(String(Number(l.quantity) ? Number(l.totalAmount) / Number(l.quantity) : 0)), discountPct: l.discountPct, total: n(l.totalAmount) })),
         totals: [...(Number(s.discountTotal) > 0 ? [{ label: "Descuento", value: n(s.discountTotal) }] : []), { label: "Total", value: n(s.total), strong: true }, ...(Number(s.balance) > 0 ? [{ label: "Saldo por cobrar", value: n(s.balance) }] : [])],
@@ -174,8 +186,9 @@ export class DocumentsService {
     }
     const o = await this.purchasing.getOrder(ctx, id);
     if (o.status === "DRAFT") throw conflict("NOT_ISSUED", "Solo se imprime una orden emitida.");
+    const poBranch = await ctx.run(async (tx) => (await tx.purchaseOrder.findUnique({ where: { id }, select: { warehouse: { select: { branchId: true } } } }))?.warehouse.branchId ?? null);
     return {
-      title: "Orden de compra", code: o.code, date: this.fmt(tz, o.issuedAt ?? o.createdAt), company, branch: null, party: { label: "Proveedor", name: o.supplier.name },
+      title: "Orden de compra", code: o.code, date: this.fmt(tz, o.issuedAt ?? o.createdAt), company, branch: await this.branchOf(ctx, poBranch), party: { label: "Proveedor", name: o.supplier.name },
       meta: [{ label: "Fecha", value: this.fmt(tz, o.issuedAt ?? o.createdAt) }, { label: "Entregar en", value: o.warehouse.name }, ...(o.expectedOn ? [{ label: "Entrega prevista", value: o.expectedOn.split("-").reverse().join("/") }] : [])],
       lines: o.lines.map((l) => ({ code: l.productCode, name: l.productName, qty: q(l.quantity), unit: l.unit, price: n(l.unitCost), discountPct: "0", total: n(String(Number(l.quantity) * Number(l.unitCost))) })),
       totals: [{ label: "Total", value: n(o.total), strong: true }], taxes: [], payments: [], note: o.note, disclaimer: null, currency: o.currency,

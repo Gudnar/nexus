@@ -4,7 +4,7 @@ export const BRANCH_COOKIE = "erp_branch";
 /** Sesión del administrador global (consola de plataforma): cookie y audiencia separadas. */
 export const PT_COOKIE = "erp_pt";
 
-export const API_URL = process.env.API_URL ?? "http://127.0.0.1:3000";
+export const API_URL = process.env.API_URL ?? "http://127.0.0.1:4300";
 
 const REFRESH_DAYS = Number(process.env.REFRESH_COOKIE_DAYS ?? 30);
 

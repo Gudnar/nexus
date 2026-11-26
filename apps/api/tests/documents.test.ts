@@ -180,3 +180,17 @@ describe("impresoras", () => {
     assert.equal((await api(adminB, "GET", "/documents/printers")).json.length, 0);
   });
 });
+
+describe("datos de la sucursal y de la caja en el recibo", () => {
+  it("el recibo imprime dirección, teléfono, correo de la sucursal y la caja donde se cobró", async () => {
+    const patch = await call("PATCH", `/api/v1/admin/branches/${world.a1}`, { token: admin, body: { address: "Calle Comercio 55", phone: "2-998877", email: "sucursal1@empresa.com" } });
+    assert.equal(patch.status, 200, JSON.stringify(patch.json));
+    const reg = await api(admin, "POST", "/cash/registers", { code: "CJ1", name: "Caja Uno", branchId: world.a1, kind: "BOX" });
+    assert.equal(reg.status, 201, JSON.stringify(reg.json));
+    const op = await api(admin, "POST", "/cash/sessions", { registerId: reg.json.id, denominations: { "100": 1 } });
+    assert.equal(op.status, 201, JSON.stringify(op.json));
+    const sale = await confirmedSale(1);
+    const h: string = (await render(admin, "SALE_RECEIPT", sale.id)).json.html;
+    assert.ok(h.includes("Calle Comercio 55") && h.includes("2-998877") && h.includes("sucursal1@empresa.com") && h.includes("Caja: Caja Uno"));
+  });
+});
